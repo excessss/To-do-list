@@ -199,11 +199,10 @@ function editTask(e, obj) {
 function orderTasksByName() {
   if (arrTasks.length >= 1) {
     return arrTasks.sort((task1, task2) => {
-      const taskOne = task1.getText().toLowerCase();
-      const taskTwo = task2.getText().toLowerCase();
-      if (taskOne > taskTwo) return 1;
-      else if (taskOne < taskTwo) return -1;
-      else return 0;
+      return compare(
+        task1.getText().toUpperCase(),
+        task2.getText().toUpperCase()
+      );
     });
   }
   console.log(arrTasks);
@@ -213,15 +212,23 @@ function orderTasksByName() {
 function orderTasksById() {
   if (arrTasks.length >= 1) {
     return arrTasks.sort((task1, task2) => {
-      const taskOne = task1.getIndex();
-      const taskTwo = task2.getIndex();
-      if (taskOne > taskTwo) return 1;
-      else if (taskOne < taskTwo) return -1;
-      else return 0;
+      return compare(task1.getIndex(), task2.getIndex());
     });
   }
   console.log(arrTasks);
   return [];
+}
+
+/**
+ *
+ * @param {Object Field} attrOne
+ * @param {Object Field} attrTwo
+ * @returns
+ */
+function compare(attrOne, attrTwo) {
+  if (attrOne > attrTwo) return 1;
+  else if (attrOne < attrTwo) return -1;
+  else return 0;
 }
 
 /**
@@ -272,6 +279,7 @@ setOrderName.addEventListener("click", (e) => {
   orderTasksByName().forEach((task) => {
     creatTask(task);
   });
+  console.log(arrTasks);
 });
 
 setOrderId.addEventListener("click", (e) => {
@@ -279,15 +287,8 @@ setOrderId.addEventListener("click", (e) => {
   orderTasksById().forEach((task) => {
     creatTask(task);
   });
+  console.log(arrTasks);
 });
-
-function alphabeticOrder() {
-  arrTasks.forEach((item) => {
-    item.seText(
-      item.getText().charAt(0).toUpperCase() + item.getText().slice(1)
-    );
-  });
-}
 
 getTrue.addEventListener("click", (e) => {
   removeElements(e);
