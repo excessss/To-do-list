@@ -136,22 +136,45 @@ function completarTarea(e, task) {
 function eliminarTarea(e, task) {
   const tarea = e.target.parentNode.parentNode;
   arrTasks.splice(arrTasks.indexOf(task), 1);
+  Task.setIndex();
   tarea.remove();
 }
 
 function newInputEdit(e, obj) {
-  if (e.key == "Enter" && e.target.value) {
+  console.log(e.pointerType);
+  if (
+    (e.key == "Enter" && e.target.value) ||
+    (e.pointerType == "mouse" && e.target.parentNode.previousSibling.value)
+  ) {
     const p = document.createElement("p");
-    p.innerText = e.target.value;
+    let parent, auxChild;
+    if (e.key == "Enter") {
+      p.innerText = e.target.value;
+      parent = e.target.parentNode;
+      auxChild = e.target.nextSibling;
+      e.target.nextSibling.remove();
+      e.target.remove();
+    } else {
+      p.innerText = e.target.parentNode.previousSibling.value;
+      parent = e.target.parentNode.parentNode;
+      auxChild = e.target.parentNode;
+      e.target.parentNode.previousSibling.remove();
+      e.target.parentNode.remove();
+    }
+    auxChild.lastChild.remove();
+    createChildren("i", auxChild, [
+      "bi",
+      "bi-pencil-square",
+      "icono-editar",
+    ]).addEventListener("click", (e) => editTask(e, obj));
+    // auxChild.lastChild.removeEventListener("click", newInputEdit);
     obj.seText(p.innerText);
-    console.log("object text: " + obj.getText());
-    const parent = e.target.parentNode;
-    const auxChild = e.target.nextSibling;
-    e.target.nextSibling.remove();
-    e.target.remove();
     parent.append(p, auxChild);
     editTaskStyles(auxChild.lastChild);
-  } else if (e.key == "Enter" && !e.target.value)
+  } else if (
+    (e.key == "Enter" && !e.target.value) ||
+    (e.pointerType == "mouse" && !e.target.parentNode.previousSibling.value)
+  )
     alert("Por favor ingresa una tarea.");
 }
 
@@ -166,42 +189,41 @@ function editTaskStyles(e) {
  * @param {object} obj
  */
 function editTask(e, obj) {
-  if (e.target.parentNode.previousElementSibling.innerText != "") {
-    const userInput = document.createElement("input");
-    const auxChild = e.target.parentNode;
-    const parent = e.target.parentNode.parentNode;
-    const userText = e.target.parentNode.previousElementSibling.innerText;
-    // e.target.parentNode.previousElementSibling.style;
-    //removing both elements
-    e.target.parentNode.previousElementSibling.remove();
-    e.target.parentNode.remove();
-    //rearranging nodes within parent
-    userInput.value = userText;
-    parent.append(userInput, auxChild);
-    //switching out styles
-    if (parent.classList.contains("completada"))
-      parent.classList.remove("completada");
-    e.target.classList.toggle("bi-pencil-square");
-    e.target.classList.add("bi-box-arrow-in-right", "icono-enter");
-    /* e.target.remove();
-    createChildren("i", iconos, [
-      "bi-box-arrow-in-right",
-      "icono-enter",
-      "icono-editar",
-    ]).addEventListener("click", (e) => newInputEdit(e, obj)); */
-    /*  userInput.addEventListener("keydown", function (e) {
+  console.log("enters editTask method");
+  const userInput = document.createElement("input");
+  const auxChild = e.target.parentNode;
+  const parent = e.target.parentNode.parentNode;
+  const userText = e.target.parentNode.previousElementSibling.innerText;
+  // e.target.parentNode.previousElementSibling.style;
+  //removing both elements
+  e.target.parentNode.previousElementSibling.remove();
+  e.target.parentNode.remove();
+  //rearranging nodes within parent
+  userInput.value = userText;
+  parent.append(userInput, auxChild);
+  //switching out styles
+  if (parent.classList.contains("completada"))
+    parent.classList.remove("completada");
+  /*  e.target.classList.toggle("bi-pencil-square");
+    e.target.classList.add("bi-box-arrow-in-right", "icono-enter"); */
+  e.target.remove();
+  createChildren("i", auxChild, [
+    "bi-box-arrow-in-right",
+    "icono-enter",
+    "icono-editar",
+  ]).addEventListener("click", (e) => newInputEdit(e, obj));
+  /*  userInput.addEventListener("keydown", function (e) {
       newInputEdit(e)      
-    }); */
-    userInput.addEventListener("keydown", (e) => newInputEdit(e, obj));
-  }
+      }); */
+  userInput.addEventListener("keydown", (e) => newInputEdit(e, obj));
 }
 
 function orderTasksByName() {
   if (arrTasks.length >= 1) {
     return arrTasks.sort((task1, task2) => {
       return compare(
-        task1.getText().toUpperCase(),
-        task2.getText().toUpperCase()
+        task1.getText().toLowerCase(),
+        task2.getText().toLowerCase()
       );
     });
   }
@@ -238,19 +260,8 @@ function compare(attrOne, attrTwo) {
  */
 
 function getTasks(complete) {
-  let tasksNotComplete = [],
-    tasksComplete = [];
-
-  if (arrTasks.length >= 1) {
-    switch (complete) {
-      case true:
-        return arrTasks.filter((element) => element.isComplete() === true);
-      case false:
-        return arrTasks.filter((element) => element.isComplete() === false);
-    }
-  }
-  console.log(tasksNotComplete);
-  console.log(tasksComplete);
+  if (arrTasks.length >= 1)
+    return arrTasks.filter((element) => element.isComplete() === complete);
   return [];
 }
 /**
@@ -266,6 +277,7 @@ function creatTask(task) {
   const iconos = createChildren("div", newTask, ["iconos"]);
   iconsElements(iconos, task);
   if (task.isComplete()) newTask.classList.add("completada");
+  newTask.setAttribute("id", task.getIndex());
   listaDeTareas.appendChild(newTask);
 }
 
@@ -274,31 +286,31 @@ function removeElements() {
   Array.from(listaDeTareas.childNodes).forEach((node) => node.remove());
 }
 
-setOrderName.addEventListener("click", (e) => {
-  removeElements(e);
+setOrderName.addEventListener("click", () => {
+  removeElements();
   orderTasksByName().forEach((task) => {
     creatTask(task);
   });
   console.log(arrTasks);
 });
 
-setOrderId.addEventListener("click", (e) => {
-  removeElements(e);
+setOrderId.addEventListener("click", () => {
+  removeElements();
   orderTasksById().forEach((task) => {
     creatTask(task);
   });
   console.log(arrTasks);
 });
 
-getTrue.addEventListener("click", (e) => {
-  removeElements(e);
+getTrue.addEventListener("click", () => {
+  removeElements();
   getTasks(true).forEach((task) => {
     creatTask(task);
   });
 });
 
-getFalse.addEventListener("click", (e) => {
-  removeElements(e);
+getFalse.addEventListener("click", () => {
+  removeElements();
   getTasks(false).forEach((task) => {
     creatTask(task);
   });
